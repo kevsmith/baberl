@@ -30,8 +30,8 @@ typedef struct {
   char *text;
 } converted_text_t;
 
-inline int read_int32(const char* data, int offset);
-char* read_string(const char* data, int offset, int length);
+inline int read_int32(char **data);
+char *read_string(char **data);
 void convert_text(const char *from, const char *to, char *text, const size_t text_size, converted_text_t *results);
 
 #endif

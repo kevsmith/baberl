@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
  */
-
+#include <stdio.h>
 #include <string.h>
 #include <strings.h>
 #include <iconv.h>
@@ -31,20 +31,27 @@ THE SOFTWARE.
 
 #include "drv_util.h"
 
-inline int read_int32(const char* data, int offset) {
-  return ((((int)(((unsigned char*) (data))[offset]))  << 24) |
-	  (((int)(((unsigned char*) (data))[offset + 1]))  << 16) |
-	  (((int)(((unsigned char*) (data))[offset + 2]))  << 8)  |
-	  (((int)(((unsigned char*) (data))[offset + 3]))));
+inline int read_int32(char **data) {
+  char *d = *data;
+  int value = ((((int)(((unsigned char*) (d))[0]))  << 24) |
+	       (((int)(((unsigned char*) (d))[1]))  << 16) |
+	       (((int)(((unsigned char*) (d))[2]))  << 8)  |
+	       (((int)(((unsigned char*) (d))[3]))));
+  (*data) += 4;
+  return value;
 }
 
 // Any string read using this function must be freed
 // using driver_free later
-char* read_string(const char* data, int offset, int length) {
-  char* buf = (char*) driver_alloc(length + 1);
-  bzero(buf, length + 1);
-  const char* source = &data[offset];
-  memcpy(buf, source, length);
+char *read_string(char **data) {
+  int length = read_int32(data);
+  char *buf = NULL;
+  if (length > 0) {
+    buf = (char *) driver_alloc(length + 1);
+    memset(buf, 0, length + 1);
+    memcpy(buf, (const char *) *data, length);
+    (*data) += length;
+  }
   return buf;
 }
 

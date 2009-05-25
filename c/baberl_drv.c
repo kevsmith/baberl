@@ -79,17 +79,16 @@ static void stop(ErlDrvData handle) {
 
 static void process(ErlDrvData handle, ErlIOVec *ev) {
   baberl_drv_t* driver_data = (baberl_drv_t*) handle;
-  ErlDrvBinary* data = ev->binv[1];
+  ErlDrvBinary* args = ev->binv[1];
+  char *data = args->orig_bytes;
   char *from_encoding, *to_encoding, *text;
   converted_text_t cv;
 
-  int from_size = read_int32(data->orig_bytes, 0);
-  from_encoding = read_string(data->orig_bytes, 4, from_size);
-  int to_size = read_int32(data->orig_bytes, from_size + 4);
-  to_encoding = read_string(data->orig_bytes, from_size + 8, to_size);
-  int text_size = read_int32(data->orig_bytes, from_size + to_size + 8);
-  text = read_string(data->orig_bytes, from_size + to_size + 12, text_size);
-  convert_text(from_encoding, to_encoding, text, text_size, &cv);
+  from_encoding = read_string(&data);
+  to_encoding = read_string(&data);
+  text = read_string(&data);
+
+  convert_text(from_encoding, to_encoding, text, strlen(text), &cv);
   ErlDrvBinary *result = driver_alloc_binary(cv.text_size);
   memcpy(result->orig_bytes, cv.text, cv.text_size);
 
