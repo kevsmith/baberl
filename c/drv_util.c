@@ -52,6 +52,10 @@ char *read_string(char **data) {
     memcpy(buf, (const char *) *data, length);
     (*data) += length;
   }
+  else {
+    buf = (char *) driver_alloc(1);
+    memset(buf, 0, 1);
+  }
   return buf;
 }
 

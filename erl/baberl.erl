@@ -25,7 +25,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, convert/3, encodings/0, is_supported/1]).
+-export([start_link/0, convert/2, convert/3, encodings/0, is_supported/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -52,6 +52,10 @@ convert(FromEncoding, ToEncoding, Text) when is_list(FromEncoding),
                                              is_binary(Text) ->
   gen_server:call(?MODULE, {convert, FromEncoding, ToEncoding, Text}).
 
+convert(ToEncoding, Text) when is_list(ToEncoding),
+                               is_binary(Text) ->
+  gen_server:call(?MODULE, {convert, "", ToEncoding, Text}).
+
 encodings() ->
   gen_server:call(?MODULE, encodings).
 
@@ -69,9 +73,9 @@ handle_call(encodings, _From, State) ->
 handle_call({is_supported, Encoding}, _From, State) ->
   {reply, baberl_driver:is_encoding_supported(Encoding), State};
 
-handle_call({convert, From, To, Text}, From, State) ->
+handle_call({convert, FromEncoding, ToEncoding, Text}, From, State) ->
   proc_lib:spawn_opt(fun() ->
-                         Result = baberl_driver:convert(From, To, Text),
+                         Result = baberl_driver:convert(FromEncoding, ToEncoding, Text),
                          gen_server:reply(From, Result) end, [{fullsweep_after, 0}]),
   {noreply, State}.
 

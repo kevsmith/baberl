@@ -8,13 +8,12 @@ else
 	ARCH = macosx
 endif
 
-all:
-	(cd c;$(MAKE))
-	(cd erl;$(MAKE))
+all:	make_subprojects test
 
 clean:
 	(cd c;$(MAKE) clean)
 	(cd erl;$(MAKE) clean)
+	(cd t;rm -f *.beam)
 
 distclean: clean
 	rm -rf autom4te.cache config.log config.status
@@ -27,3 +26,11 @@ install: all
 debug:
 	(cd c;$(MAKE) debug)
 	(cd erl;$(MAKE) debug)
+
+test:
+	prove t/*.t
+
+make_subprojects:
+	(cd c;$(MAKE))
+	(cd erl;$(MAKE))
+	(cd t;erl -make)
