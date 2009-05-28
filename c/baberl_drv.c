@@ -88,17 +88,24 @@ static void process(ErlDrvData handle, ErlIOVec *ev) {
   to_encoding = read_string(&data);
   text = read_string(&data);
 
+  cv.error = 0;
   convert_text(from_encoding, to_encoding, text, strlen(text), &cv);
-  ErlDrvBinary *result = driver_alloc_binary(cv.text_size);
-  memcpy(result->orig_bytes, cv.text, cv.text_size);
 
-  ErlDrvTermData spec[] = {ERL_DRV_BINARY, result, result->orig_size, 0};
-
-  driver_output_term(driver_data->port, spec, sizeof(spec) / sizeof(spec[0]));
+  if (cv.error == 0) {
+    ErlDrvTermData spec[] = {ERL_DRV_ATOM, driver_mk_atom("ok"),
+			     ERL_DRV_BUF2BINARY, cv.text, cv.text_size,
+			     ERL_DRV_TUPLE, 2};
+    driver_output_term(driver_data->port, spec, sizeof(spec) / sizeof(spec[0]));
+  }
+  else {
+    ErlDrvTermData spec[] = {ERL_DRV_ATOM, driver_mk_atom("error"),
+			     ERL_DRV_ATOM, driver_mk_atom("iconv_coding"),
+			     ERL_DRV_TUPLE, 2};
+    driver_output_term(driver_data->port, spec, sizeof(spec) / sizeof(spec[0]));
+  }
 
   driver_free(from_encoding);
   driver_free(to_encoding);
   driver_free(text);
   driver_free(cv.text);
-  driver_free_binary(result);
 }

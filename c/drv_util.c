@@ -63,14 +63,22 @@ void convert_text(const char *from, const char *to, char *text, const size_t tex
   size_t remaining = text_size;
   size_t available = remaining * 3;
   size_t start_available = available;
+  size_t iconv_result = 0;
+
   char *buf = (char *) driver_alloc(available);
-  bzero(buf, available);
   char *result = buf;
+  memset(buf, 0, available);
   iconv_t cd = iconv_open(to, from);
   while (remaining > 0) {
-    iconv(cd, &text, &remaining, &buf, &available);
+    iconv_result = iconv(cd, &text, &remaining, &buf, &available);
+    if (iconv_result == -1) {
+      results->error = 1;
+      break;
+    }
   }
   iconv_close(cd);
-  results->text_size = start_available - available;
-  results->text = result;
+  if (results->error == 0) {
+    results->text_size = start_available - available;
+    results->text = result;
+  }
 }

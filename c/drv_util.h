@@ -28,6 +28,7 @@ THE SOFTWARE.
 typedef struct {
   size_t text_size;
   char *text;
+  int error;
 } converted_text_t;
 
 inline int read_int32(char **data);

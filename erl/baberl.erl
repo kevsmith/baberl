@@ -23,9 +23,11 @@
 -author("Kevin A. Smith <kevin@hypotheticalabs.com").
 
 -behaviour(gen_server).
+-include("baberl.hrl").
 
 %% API
 -export([start_link/0, convert/2, convert/3, encodings/0, is_supported/1]).
+-export([closest_match/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -50,11 +52,17 @@ start_link() ->
 convert(FromEncoding, ToEncoding, Text) when is_list(FromEncoding),
                                              is_list(ToEncoding),
                                              is_binary(Text) ->
-  gen_server:call(?MODULE, {convert, FromEncoding, ToEncoding, Text}).
+  Result = gen_server:call(?MODULE, {convert, FromEncoding, ToEncoding, Text}),
+  case Result of
+    {error, {unsupported_encoding, _}} ->
+      throw(Result);
+    _ ->
+      Result
+  end.
 
 convert(ToEncoding, Text) when is_list(ToEncoding),
                                is_binary(Text) ->
-  gen_server:call(?MODULE, {convert, "", ToEncoding, Text}).
+  convert("", ToEncoding, Text).
 
 encodings() ->
   gen_server:call(?MODULE, encodings).
@@ -62,10 +70,26 @@ encodings() ->
 is_supported(Encoding) ->
   gen_server:call(?MODULE, {is_supported, Encoding}).
 
+closest_match(Encoding) ->
+  case is_supported(Encoding) of
+    true ->
+      Encoding;
+    false ->
+      gen_server:call(?MODULE, {closest_match, Encoding})
+  end.
+
 %% gen_server callbacks
 init([]) ->
+  process_flag(trap_exit, true),
   ok = baberl_driver:load(),
   {ok, []}.
+
+handle_call({closest_match, Encoding}, From, State) ->
+  proc_lib:spawn_link(fun() ->
+                          Encodings = [E || E <- ?SUPPORTED_ENCODINGS,
+                                            string:str(E, Encoding) == 1],
+                          gen_server:reply(From, Encodings) end),
+  {noreply, State};
 
 handle_call(encodings, _From, State) ->
   {reply, baberl_driver:encodings(), State};
@@ -74,9 +98,14 @@ handle_call({is_supported, Encoding}, _From, State) ->
   {reply, baberl_driver:is_encoding_supported(Encoding), State};
 
 handle_call({convert, FromEncoding, ToEncoding, Text}, From, State) ->
-  proc_lib:spawn_opt(fun() ->
-                         Result = baberl_driver:convert(FromEncoding, ToEncoding, Text),
-                         gen_server:reply(From, Result) end, [{fullsweep_after, 0}]),
+  proc_lib:spawn_link(fun() ->
+                          Result = try
+                                     baberl_driver:convert(FromEncoding, ToEncoding, Text)
+                                   catch
+                                     throw: Error ->
+                                       Error
+                                   end,
+                          gen_server:reply(From, Result) end),
   {noreply, State}.
 
 handle_cast(_Msg, State) ->
