@@ -9,6 +9,7 @@ all: ../include/baberl.hrl compile
 	cp baberl.app ../ebin
 
 compile:
+	mkdir -p ../ebin
 	erl -make
 
 clean:
@@ -24,6 +25,7 @@ package:
 	cp -r `pwd`/../ebin/* `pwd`/../.pkgtmp/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/ebin
 
 ../include/baberl.hrl:
+	mkdir -p ../include
 	erlc $(ERLC_FLAGS) -I../include -o $(EBIN_DIR) baberl_generator.erl
 	erl -pz $(EBIN_DIR) -noshell -eval "baberl_generator:generate_header(\"../include/baberl.hrl\")" -s init stop
 	rm -f ../ebin/baberl_generator.beam
