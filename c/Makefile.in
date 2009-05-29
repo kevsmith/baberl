@@ -1,6 +1,6 @@
 SHELL = /bin/sh
 VPATH = @srcdir@
-
+enable_64bit=@enable_64bit@
 top_srcdir = @top_srcdir@
 srcdir = @srcdir@
 prefix = @prefix@
@@ -16,9 +16,14 @@ ifeq ($(shell uname),Linux)
 	ARCH = linux
 	CFLAGS = $(CFLAGS_COMMON)
 	LDFLAGS = $(LDFLAGS_COMMON) -shared
-else
+endif
+ifeq ($(shell uname),Darwin)
 	ARCH = macosx
-	CFLAGS = $(CFLAGS_COMMON) -m64 -arch i386
+	ifeq ($(enable_64bit),yes)
+		CFLAGS = $(CFLAGS_COMMON) -arch i386 -m64
+	else
+		CFLAGS = $(CFLAGS_COMMON) -arch i386
+	endif
 	LDFLAGS = $(LDFLAGS_COMMON) -dynamic -bundle -undefined suppress -flat_namespace
 endif
 

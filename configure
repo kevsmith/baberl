@@ -665,6 +665,7 @@ LIBEI
 CPP
 GREP
 EGREP
+enable_64bit
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -1243,6 +1244,11 @@ if test -n "$ac_init_help"; then
      short | recursive ) echo "Configuration of basic_driver 0.0.1:";;
    esac
   cat <<\_ACEOF
+
+Optional Features:
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-64bit          enable 64bit build (needed on some OS X systems) [default=no]
 
 Some influential environment variables:
   CC          C compiler command
@@ -3844,6 +3850,13 @@ _ACEOF
 fi
 
 
+# Check whether --enable-enable_64bit was given.
+if test "${enable_enable_64bit+set}" = set; then
+  enableval=$enable_enable_64bit;
+fi
+
+
+
 ac_config_files="$ac_config_files c/Makefile erl/Makefile Makefile"
 
 cat >confcache <<\_ACEOF
@@ -4529,11 +4542,12 @@ LIBEI!$LIBEI$ac_delim
 CPP!$CPP$ac_delim
 GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
+enable_64bit!$enable_64bit$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 55; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 56; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
