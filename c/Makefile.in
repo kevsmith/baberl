@@ -10,12 +10,11 @@ infodir = $(prefix)/info
 libdir = $(prefix)/lib/gnudl
 mandir = $(prefix)/man/man1
 CFLAGS_COMMON = $(CPPFLAGS) @CFLAGS@
-LDFLAGS_COMMON = -liconv
 
 ifeq ($(shell uname),Linux)
 	ARCH = linux
 	CFLAGS = $(CFLAGS_COMMON)
-	LDFLAGS = $(LDFLAGS_COMMON) -shared
+	LDFLAGS = -shared
 endif
 ifeq ($(shell uname),Darwin)
 	ARCH = macosx
@@ -24,7 +23,7 @@ ifeq ($(shell uname),Darwin)
 	else
 		CFLAGS = $(CFLAGS_COMMON) -arch i386
 	endif
-	LDFLAGS = $(LDFLAGS_COMMON) -dynamic -bundle -undefined suppress -flat_namespace
+	LDFLAGS = $(LDFLAGS_COMMON) -dynamic -bundle -undefined suppress -flat_namespace -liconv
 endif
 
 CC = @CC@
