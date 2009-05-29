@@ -9,14 +9,16 @@ bindir = $(exec_prefix)/bin
 infodir = $(prefix)/info
 libdir = $(prefix)/lib/gnudl
 mandir = $(prefix)/man/man1
-CFLAGS = $(CPPFLAGS) @CFLAGS@
+CFLAGS_COMMON = $(CPPFLAGS) @CFLAGS@
 LDFLAGS_COMMON = -liconv
 
 ifeq ($(shell uname),Linux)
 	ARCH = linux
+	CFLAGS = $(CFLAGS_COMMON)
 	LDFLAGS = $(LDFLAGS_COMMON) -shared
 else
 	ARCH = macosx
+	CFLAGS = $(CFLAGS_COMMON) -m64 -arch i386
 	LDFLAGS = $(LDFLAGS_COMMON) -dynamic -bundle -undefined suppress -flat_namespace
 endif
 
