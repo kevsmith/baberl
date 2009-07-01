@@ -42,10 +42,12 @@ is_encoding_supported(Encoding) ->
 convert(FromEncoding, ToEncoding, Text) when is_list(FromEncoding),
                                              is_list(ToEncoding),
                                              is_binary(Text) ->
-  [ValidFrom, ValidTo] = check_encodings([FromEncoding, ToEncoding]),
+  [FromEncodingName|_] = string:tokens(FromEncoding, "//"),
+  [ToEncodingName|_] = string:tokens(ToEncoding, "//"),
+  check_encodings([FromEncodingName, ToEncodingName]),
   P= connect_to_driver(),
   try
-    perform_conversion(P, build_command(ValidFrom, ValidTo, Text))
+    perform_conversion(P, build_command(list_to_binary(FromEncoding), list_to_binary(ToEncoding), Text))
   catch
     %% Catch and rethrow so we can define an after clause
     %% to clean up the allocated port
@@ -74,10 +76,10 @@ connect_to_driver() ->
   open_port({spawn, baberl_drv}, [binary]).
 
 check_encodings(Encodings) ->
-  lists:map(fun(E) ->
+  lists:foreach(fun(E) ->
                 case lists:member(E, ?SUPPORTED_ENCODINGS) of
                   false ->
                     throw({error, {unsupported_encoding, E}});
                   true ->
-                    list_to_binary(E)
+                    ok
                 end end, Encodings).

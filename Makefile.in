@@ -23,6 +23,12 @@ install: all
 	(cd c; $(MAKE) install)
 	(cd erl; $(MAKE) install)
 
+package: clean
+	@mkdir $(PACKAGE_NAME)-$(PACKAGE_VERSION)/ && cp -rf Makefile.in configure README c erl include t $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	@COPYFILE_DISABLE=true tar zcf $(PACKAGE_NAME)-$(PACKAGE_VERSION).tgz $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	@rm -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)/
+
+
 debug:
 	(cd c;$(MAKE) debug)
 	(cd erl;$(MAKE) debug)

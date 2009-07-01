@@ -20,11 +20,8 @@ install:
 	install -d $(ERLDIR)/lib/$(PACKAGE_NAME)-$(PACKAGE_VERSION)
 	cp -r `pwd`/../ebin $(ERLDIR)/lib/$(PACKAGE_NAME)-$(PACKAGE_VERSION)
 
-package:
-	install -d `pwd`/../.pkgtmp/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/ebin
-	cp -r `pwd`/../ebin/* `pwd`/../.pkgtmp/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/ebin
-
 ../include/baberl.hrl:
+	mkdir -p ../ebin
 	mkdir -p ../include
 	erlc $(ERLC_FLAGS) -I../include -o $(EBIN_DIR) baberl_generator.erl
 	erl -pz $(EBIN_DIR) -noshell -eval "baberl_generator:generate_header(\"../include/baberl.hrl\")" -s init stop

@@ -86,9 +86,13 @@ init([]) ->
 
 handle_call({closest_match, Encoding}, From, State) ->
   proc_lib:spawn_link(fun() ->
-                          Encodings = [E || E <- ?SUPPORTED_ENCODINGS,
-                                            string:str(E, Encoding) == 1],
-                          gen_server:reply(From, Encodings) end),
+                          case lists:reverse([E || E <- ?SUPPORTED_ENCODINGS,
+                                                   string:str(E, Encoding) == 1]) of
+                            [] ->
+                              gen_server:reply(From, []);
+                            [H|_] ->
+                              gen_server:reply(From, H)
+                          end end),
   {noreply, State};
 
 handle_call(encodings, _From, State) ->
