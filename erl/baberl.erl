@@ -104,7 +104,14 @@ handle_call({is_supported, Encoding}, _From, State) ->
 handle_call({convert, FromEncoding, ToEncoding, Text}, From, State) ->
   proc_lib:spawn_link(fun() ->
                           Result = try
-                                     baberl_driver:convert(FromEncoding, ToEncoding, Text)
+                                     begin
+                                       case unicode:characters_to_list(Text, utf8) of
+                                         {incomplete, _, _} ->
+                                           {error, bad_input};
+                                         _ ->
+                                           baberl_driver:convert(FromEncoding, ToEncoding, Text)
+                                       end
+                                     end
                                    catch
                                      throw: Error ->
                                        Error

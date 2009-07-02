@@ -42,8 +42,8 @@ is_encoding_supported(Encoding) ->
 convert(FromEncoding, ToEncoding, Text) when is_list(FromEncoding),
                                              is_list(ToEncoding),
                                              is_binary(Text) ->
-  [FromEncodingName|_] = string:tokens(FromEncoding, "//"),
-  [ToEncodingName|_] = string:tokens(ToEncoding, "//"),
+  FromEncodingName = extract_encoding_name(FromEncoding),
+  ToEncodingName = extract_encoding_name(ToEncoding),
   check_encodings([FromEncodingName, ToEncodingName]),
   P= connect_to_driver(),
   try
@@ -58,6 +58,12 @@ convert(FromEncoding, ToEncoding, Text) when is_list(FromEncoding),
   end.
 
 %% Private functions
+extract_encoding_name(Encoding) when length(Encoding) == 0 ->
+  "";
+extract_encoding_name(Encoding) ->
+  [EncodingName|_] = string:tokens(Encoding, "//"),
+  EncodingName.
+
 perform_conversion(P, Command) ->
   port_command(P, Command),
   receive
@@ -77,9 +83,9 @@ connect_to_driver() ->
 
 check_encodings(Encodings) ->
   lists:foreach(fun(E) ->
-                case lists:member(E, ?SUPPORTED_ENCODINGS) of
-                  false ->
-                    throw({error, {unsupported_encoding, E}});
-                  true ->
-                    ok
-                end end, Encodings).
+                    case lists:member(E, ?SUPPORTED_ENCODINGS) =:= true orelse E =:= "" of
+                      true ->
+                        ok;
+                      false ->
+                        throw({error, {unsupported_encoding, E}})
+                    end end, Encodings).
