@@ -1,0 +1,5 @@
+This is baberl, an Erlang wrapper for iconv.
+
+32-bit installation is simple: ./configure;make;sudo make install
+
+64-bit installation is almost as easy: ./configure --enable-64bit (only tested on OS X boxen)
