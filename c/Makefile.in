@@ -19,7 +19,7 @@ endif
 ifeq ($(shell uname),Darwin)
 	ARCH = macosx
 	ifeq ($(enable_64bit),yes)
-		CFLAGS = $(CFLAGS_COMMON) -arch i386 -m64
+		CFLAGS = $(CFLAGS_COMMON) -m64 -arch i386
 	else
 		CFLAGS = $(CFLAGS_COMMON) -arch i386
 	endif
