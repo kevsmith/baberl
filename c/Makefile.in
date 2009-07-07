@@ -14,9 +14,9 @@ CFLAGS_COMMON = $(CPPFLAGS) @CFLAGS@
 ifeq ($(shell uname),Linux)
 	ARCH = linux
 	ifeq ($(enable_64bit),yes)
-		CFLAGS = $(CFLAGS_COMMON) -m64 -arch x86_64
+		CFLAGS = $(CFLAGS_COMMON) -m64
 	else
-		CFLAGS = $(CFLAGS_COMMON) -arch i386
+		CFLAGS = $(CFLAGS_COMMON)
 	endif
 	LDFLAGS = -shared
 endif
