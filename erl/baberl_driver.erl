@@ -37,7 +37,12 @@ encodings() ->
   ?SUPPORTED_ENCODINGS.
 
 is_encoding_supported(Encoding) ->
-  lists:member(Encoding, ?SUPPORTED_ENCODINGS).
+  case lists:member(Encoding, ?SUPPORTED_ENCODINGS) of
+    false ->
+      lists:member(Encoding ++ "//", ?SUPPORTED_ENCODINGS);
+    true ->
+      true
+  end.
 
 convert(FromEncoding, ToEncoding, Text) when is_list(FromEncoding),
                                              is_list(ToEncoding),

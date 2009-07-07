@@ -13,7 +13,11 @@ CFLAGS_COMMON = $(CPPFLAGS) @CFLAGS@
 
 ifeq ($(shell uname),Linux)
 	ARCH = linux
-	CFLAGS = $(CFLAGS_COMMON)
+	ifeq ($(enable_64bit),yes)
+		CFLAGS = $(CFLAGS_COMMON) -m64 -arch x86_64
+	else
+		CFLAGS = $(CFLAGS_COMMON) -arch i386
+	endif
 	LDFLAGS = -shared
 endif
 ifeq ($(shell uname),Darwin)
