@@ -88,7 +88,7 @@ connect_to_driver() ->
 
 check_encodings(Encodings) ->
   lists:foreach(fun(E) ->
-                    case lists:member(E, ?SUPPORTED_ENCODINGS) =:= true orelse E =:= "" of
+                    case is_encoding_supported(E) =:= true orelse E =:= "" of
                       true ->
                         ok;
                       false ->
