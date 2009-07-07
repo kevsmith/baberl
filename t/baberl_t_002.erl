@@ -10,10 +10,10 @@ start() ->
   etap:ok({ok, <<"foo">>} =:= baberl:convert("UTF-8", "ASCII", <<"foo">>), "Simple conversion works"),
   etap:ok({ok, <<"foo">>} =:= baberl:convert("UTF-8", "ASCII//translit//IGNORE", <<"foo">>), "Complex conversion works"),
   etap:ok({error, bad_input} =:= baberl:convert("UTF-8", "ASCII", <<"foo‘">>), "Bad encoding doesn't provoke segfault"),
-  etap:ok(check_return(baberl:convert("UTF-8", "ASCII//translit//IGNORE", unicode:characters_to_binary("foo‘"))), "Transliteration works"),
+  etap:ok(true =:= check_return(baberl:convert("UTF-8", "ASCII//translit//IGNORE", unicode:characters_to_binary("foo‘"))), "Transliteration works"),
   etap:end_tests().
 
-check_return({ok, <<"foo??">>}) ->
+check_return({ok, <<"foo?">>}) ->
   true;
 check_return({ok, <<"foo^O">>}) ->
   true;

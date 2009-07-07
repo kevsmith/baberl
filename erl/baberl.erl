@@ -91,7 +91,7 @@ handle_call({closest_match, Encoding}, From, State) ->
                             [] ->
                               gen_server:reply(From, []);
                             [H|_] ->
-                              gen_server:reply(From, H)
+                              gen_server:reply(From, re:replace(H, "//", "", [{return, list}]))
                           end end),
   {noreply, State};
 
