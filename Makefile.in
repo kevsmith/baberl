@@ -11,7 +11,6 @@ endif
 all:
 	(cd c;$(MAKE))
 	mkdir -p ../include
-	escript ./baberl_generator.escript include/baberl.hrl
 	(cd erl;$(MAKE))
 
 clean:
