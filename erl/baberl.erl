@@ -23,30 +23,12 @@
 -author("Kevin A. Smith <kevin@hypotheticalabs.com").
 -include("baberl.hrl").
 
--export([start/0, convert/3, convert/4, check_encodings/1, is_supported_encoding/1]).
+-export([convert/2, convert/3, check_encodings/1, is_supported_encoding/1]).
 -export([encodings/0, closest_match/1]).
 
-%% @hidden
-%% @private
-load_driver() ->
-    Dir = filename:join([filename:dirname(code:which(baberl)), "..", "priv"]),
-    erl_ddll:load(Dir, "baberl_drv").
-
-%% @spec start() -> {ok, pid()} | {error, term()}
-%% @doc Starts a baberl instance.
-start() ->
-    case load_driver() of
-        ok ->
-            P = open_port({spawn, 'baberl_drv'}, [binary]),
-            {ok, {baberl, P}};
-        {error, Err} ->
-            Msg = erl_ddll:format_error(Err),
-            {error, Msg}
-    end.
-
 %% @equiv convert(Pid, "", ToEncoding, Text).
-convert(Pid, ToEncoding, Text) when is_list(ToEncoding), is_binary(Text) ->
-    convert(Pid, "", ToEncoding, Text).
+convert(ToEncoding, Text) when is_list(ToEncoding), is_binary(Text) ->
+  convert("", ToEncoding, Text).
 
 %% @spec convert(BaberlPort, FromEncoding, ToEncoding, Text) -> Result
 %%       BaberlPort = {atom(), pid()}
@@ -54,47 +36,61 @@ convert(Pid, ToEncoding, Text) when is_list(ToEncoding), is_binary(Text) ->
 %%       ToEncoding = string()
 %%       Text = binary()
 %%       Result = term()
-convert(Port, FromEncoding, ToEncoding, Text) when is_list(FromEncoding), is_list(ToEncoding), is_binary(Text) ->
-    case unicode:characters_to_list(Text, utf8) of
-        {incomplete, _, _} -> throw(bad_input);
-        _ -> ok
-    end,
-    check_encodings([extract_encoding_name(FromEncoding), extract_encoding_name(ToEncoding)]),
-    Command = iolist_to_binary(lists:map(fun
-        ("") -> [<<0:32>>, []];
-        (Term) -> S = size(Term), [<<S:32>>, Term]
-    end, [list_to_binary(FromEncoding), list_to_binary(ToEncoding), Text])),
-    port_command(Port, Command),
-    receive R -> R
-    after 50 -> {error, timeout}
-    end.
+convert(FromEncoding, ToEncoding, Text) when is_list(FromEncoding), is_list(ToEncoding), is_binary(Text) ->
+  case unicode:characters_to_list(Text, utf8) of
+    {incomplete, _, _} -> throw(bad_input);
+    _ -> ok
+  end,
+  check_encodings([extract_encoding_name(FromEncoding), extract_encoding_name(ToEncoding)]),
+  Command = iolist_to_binary(lists:map(fun
+                                       ("") -> [<<0:32>>, []];
+                                       (Term) -> S = size(Term), [<<S:32>>, Term]
+                                      end, [list_to_binary(FromEncoding), list_to_binary(ToEncoding), Text])),
+  Port = start_port(),
+  try
+    begin
+      port_command(Port, Command),
+      receive
+        R ->
+          R
+      after 50 ->
+        {error, timeout}
+      end
+    end
+  after
+    port_close(Port)
+  end.
 
 check_encodings(Encodings) ->
-    lists:foreach(fun(E) ->
-        case is_supported_encoding(E) =:= true orelse E =:= "" of
-            true -> ok;
-            false -> throw({error, {unsupported_encoding, E}})
-        end
-    end, Encodings).
+  lists:foreach(fun(E) ->
+                    case is_supported_encoding(E) =:= true orelse E =:= "" of
+                      true -> ok;
+                      false -> throw({error, {unsupported_encoding, E}})
+                    end
+                end, Encodings).
 
 is_supported_encoding(Encoding) ->
-    lists:member(Encoding, ?SUPPORTED_ENCODINGS) or lists:member(Encoding ++ "//", ?SUPPORTED_ENCODINGS).
+  lists:member(Encoding, ?SUPPORTED_ENCODINGS) or lists:member(Encoding ++ "//", ?SUPPORTED_ENCODINGS).
 
 encodings() ->
-    ?SUPPORTED_ENCODINGS.
+  ?SUPPORTED_ENCODINGS.
 
 closest_match(Encoding) ->
-    case is_supported_encoding(Encoding) of
-        true -> Encoding;
-        false ->
-            case lists:reverse([E || E <- ?SUPPORTED_ENCODINGS, string:str(E, Encoding) == 1]) of
-                [] -> [];
-                [H | _] -> re:replace(H, "//", "", [{return, list}])
-            end
-    end.
+  case is_supported_encoding(Encoding) of
+    true -> Encoding;
+    false ->
+      case lists:reverse([E || E <- ?SUPPORTED_ENCODINGS, string:str(E, Encoding) == 1]) of
+        [] -> [];
+        [H | _] -> re:replace(H, "//", "", [{return, list}])
+      end
+  end.
 
 %% @private
 extract_encoding_name("") -> "";
 extract_encoding_name(Encoding) ->
-    [EncodingName | _] = string:tokens(Encoding, "//"),
-    EncodingName.
+  [EncodingName | _] = string:tokens(Encoding, "//"),
+  EncodingName.
+
+%% @private
+start_port() ->
+  open_port({spawn, 'baberl_drv'}, [binary]).

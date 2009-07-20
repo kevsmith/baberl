@@ -10,7 +10,9 @@ all: compile
 
 compile:
 	mkdir -p ../ebin
-	erlc -I../include -o ../ebin baberl.erl
+	mkdir -p ../include
+	escript ../baberl_generator.escript ../include/baberl.hrl
+	erl -make
 
 clean:
 	-rm -f $(EBIN_DIR)/*
