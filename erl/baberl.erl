@@ -21,112 +21,80 @@
 -module(baberl).
 
 -author("Kevin A. Smith <kevin@hypotheticalabs.com").
-
--behaviour(gen_server).
 -include("baberl.hrl").
 
-%% API
--export([start_link/0, convert/2, convert/3, encodings/0, is_supported/1]).
--export([closest_match/1]).
+-export([start/0, convert/3, convert/4, check_encodings/1, is_supported_encoding/1]).
+-export([encodings/0, closest_match/1]).
 
-%% gen_server callbacks
--export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+%% @hidden
+%% @private
+load_driver() ->
+    Dir = filename:join([filename:dirname(code:which(baberl)), "..", "priv"]),
+    erl_ddll:load(Dir, "baberl_drv").
 
-%%---------------------------------------------------------
-%% @doc
-%% Starts the baberl server process
-%%
-%% @spec start_link() -> {ok, pid()} | {error, atom()}
-%%----------------------------------------------------------
-start_link() ->
-  gen_server:start_link({local, ?MODULE}, ?MODULE, [], [{fullsweep_after, 0}]).
+%% @spec start() -> {ok, pid()} | {error, term()}
+%% @doc Starts a baberl instance.
+start() ->
+    case load_driver() of
+        ok ->
+            P = open_port({spawn, 'baberl_drv'}, [binary]),
+            {ok, {baberl, P}};
+        {error, Err} ->
+            Msg = erl_ddll:format_error(Err),
+            {error, Msg}
+    end.
 
-%%---------------------------------------------------------
-%% @doc
-%% Takes an Erlang binary and converts it from one
-%% charset encoding to another
-%%
-%% @spec convert(string(), string(), binary()) -> binary()
-%%----------------------------------------------------------
-convert(FromEncoding, ToEncoding, Text) when is_list(FromEncoding),
-                                             is_list(ToEncoding),
-                                             is_binary(Text) ->
-  Result = gen_server:call(?MODULE, {convert, FromEncoding, ToEncoding, Text}),
-  case Result of
-    {error, {unsupported_encoding, _}} ->
-      throw(Result);
-    _ ->
-      Result
-  end.
+%% @equiv convert(Pid, "", ToEncoding, Text).
+convert(Pid, ToEncoding, Text) when is_list(ToEncoding), is_binary(Text) ->
+    convert(Pid, "", ToEncoding, Text).
 
-convert(ToEncoding, Text) when is_list(ToEncoding),
-                               is_binary(Text) ->
-  convert("", ToEncoding, Text).
+%% @spec convert(BaberlPort, FromEncoding, ToEncoding, Text) -> Result
+%%       BaberlPort = {atom(), pid()}
+%%       FromEncoding = string()
+%%       ToEncoding = string()
+%%       Text = binary()
+%%       Result = term()
+convert(Port, FromEncoding, ToEncoding, Text) when is_list(FromEncoding), is_list(ToEncoding), is_binary(Text) ->
+    case unicode:characters_to_list(Text, utf8) of
+        {incomplete, _, _} -> throw(bad_input);
+        _ -> ok
+    end,
+    check_encodings([extract_encoding_name(FromEncoding), extract_encoding_name(ToEncoding)]),
+    Command = iolist_to_binary(lists:map(fun
+        ("") -> [<<0:32>>, []];
+        (Term) -> S = size(Term), [<<S:32>>, Term]
+    end, [list_to_binary(FromEncoding), list_to_binary(ToEncoding), Text])),
+    port_command(Port, Command),
+    receive R -> R
+    after 50 -> {error, timeout}
+    end.
+
+check_encodings(Encodings) ->
+    lists:foreach(fun(E) ->
+        case is_supported_encoding(E) =:= true orelse E =:= "" of
+            true -> ok;
+            false -> throw({error, {unsupported_encoding, E}})
+        end
+    end, Encodings).
+
+is_supported_encoding(Encoding) ->
+    lists:member(Encoding, ?SUPPORTED_ENCODINGS) or lists:member(Encoding ++ "//", ?SUPPORTED_ENCODINGS).
 
 encodings() ->
-  gen_server:call(?MODULE, encodings).
-
-is_supported(Encoding) ->
-  gen_server:call(?MODULE, {is_supported, Encoding}).
+    ?SUPPORTED_ENCODINGS.
 
 closest_match(Encoding) ->
-  case is_supported(Encoding) of
-    true ->
-      Encoding;
-    false ->
-      gen_server:call(?MODULE, {closest_match, Encoding})
-  end.
+    case is_supported_encoding(Encoding) of
+        true -> Encoding;
+        false ->
+            case lists:reverse([E || E <- ?SUPPORTED_ENCODINGS, string:str(E, Encoding) == 1]) of
+                [] -> [];
+                [H | _] -> re:replace(H, "//", "", [{return, list}])
+            end
+    end.
 
-%% gen_server callbacks
-init([]) ->
-  process_flag(trap_exit, true),
-  ok = baberl_driver:load(),
-  {ok, []}.
-
-handle_call({closest_match, Encoding}, From, State) ->
-  proc_lib:spawn_link(fun() ->
-                          case lists:reverse([E || E <- ?SUPPORTED_ENCODINGS,
-                                                   string:str(E, Encoding) == 1]) of
-                            [] ->
-                              gen_server:reply(From, []);
-                            [H|_] ->
-                              gen_server:reply(From, re:replace(H, "//", "", [{return, list}]))
-                          end end),
-  {noreply, State};
-
-handle_call(encodings, _From, State) ->
-  {reply, baberl_driver:encodings(), State};
-
-handle_call({is_supported, Encoding}, _From, State) ->
-  {reply, baberl_driver:is_encoding_supported(Encoding), State};
-
-handle_call({convert, FromEncoding, ToEncoding, Text}, From, State) ->
-  proc_lib:spawn_link(fun() ->
-                          Result = try
-                                     begin
-                                       case unicode:characters_to_list(Text, utf8) of
-                                         {incomplete, _, _} ->
-                                           {error, bad_input};
-                                         _ ->
-                                           baberl_driver:convert(FromEncoding, ToEncoding, Text)
-                                       end
-                                     end
-                                   catch
-                                     throw: Error ->
-                                       Error
-                                   end,
-                          gen_server:reply(From, Result) end),
-  {noreply, State}.
-
-handle_cast(_Msg, State) ->
-  {noreply, State}.
-
-handle_info(_Info, State) ->
-  {noreply, State}.
-
-terminate(_Reason, _State) ->
-  baberl_driver:unload().
-
-code_change(_OldVsn, State, _Extra) ->
-  {ok, State}.
+%% @private
+extract_encoding_name("") -> "";
+extract_encoding_name(Encoding) ->
+    [EncodingName | _] = string:tokens(Encoding, "//"),
+    EncodingName.

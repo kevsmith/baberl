@@ -8,12 +8,15 @@ else
 	ARCH = macosx
 endif
 
-all:	make_subprojects test
+all:
+	(cd c;$(MAKE))
+	mkdir -p ../include
+	escript ./baberl_generator.escript include/baberl.hrl
+	(cd erl;$(MAKE))
 
 clean:
 	(cd c;$(MAKE) clean)
 	(cd erl;$(MAKE) clean)
-	(cd t;rm -f *.beam)
 
 distclean: clean
 	rm -rf autom4te.cache config.log config.status
@@ -35,8 +38,3 @@ debug:
 
 test:
 	prove t/*.t
-
-make_subprojects:
-	(cd c;$(MAKE))
-	(cd erl;$(MAKE))
-	(cd t;erl -make)

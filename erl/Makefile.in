@@ -5,12 +5,12 @@ EBIN_DIR := ../ebin
 EMULATOR := beam
 ERLDIR = @ERLDIR@
 
-all: ../include/baberl.hrl compile
+all: compile
 	cp baberl.app ../ebin
 
 compile:
 	mkdir -p ../ebin
-	erl -make
+	erlc -I../include -o ../ebin baberl.erl
 
 clean:
 	-rm -f $(EBIN_DIR)/*
@@ -19,10 +19,3 @@ clean:
 install:
 	install -d $(ERLDIR)/lib/$(PACKAGE_NAME)-$(PACKAGE_VERSION)
 	cp -r `pwd`/../ebin $(ERLDIR)/lib/$(PACKAGE_NAME)-$(PACKAGE_VERSION)
-
-../include/baberl.hrl:
-	mkdir -p ../ebin
-	mkdir -p ../include
-	erlc $(ERLC_FLAGS) -I../include -o $(EBIN_DIR) baberl_generator.erl
-	erl -pz $(EBIN_DIR) -noshell -eval "baberl_generator:generate_header(\"../include/baberl.hrl\")" -s init stop
-	rm -f ../ebin/baberl_generator.beam

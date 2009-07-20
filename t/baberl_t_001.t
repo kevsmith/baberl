@@ -1,6 +1,9 @@
 #!/usr/bin/env escript
 %% -*- erlang -*-
-%%! -pa t/ -pa ebin -sasl errlog_type error -boot start_sasl
+%%! -pa ./ebin -sasl errlog_type error -boot start_sasl
 
 main(_) ->
-  baberl_t_001:start().
+    etap:plan(unknown),
+    etap:is(application:start(baberl), ok, "Start baberl app"),
+    etap:is(application:stop(baberl), ok, "Stop baberl app"),
+    etap:end_tests().
