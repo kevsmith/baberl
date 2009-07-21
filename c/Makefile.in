@@ -42,19 +42,19 @@ debug:
 .SUFFIXES: .o .c .h
 
 ../priv/%_drv.so: %_drv.o drv_util.o
-	mkdir -p ../priv
+	@mkdir -p ../priv
 	$(CC) $(CFLAGS) $(DEFS) $(DEBUG) $(LDFLAGS) -o $@ $^ @LIBEI@
 
 .c.o:
 	$(CC) $(CFLAGS) $(DEFS) $(DEBUG) -c $<
 
 clean:
-	rm -rf *.o *.a $(OUTPUTFILES)
+	@rm -rf *.o *.a $(OUTPUTFILES)
 
 install:
 	install -d $(ERLDIR)/lib/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/priv
-	cp -r `pwd`/../priv $(ERLDIR)/lib/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
+	@cp -r `pwd`/../priv $(ERLDIR)/lib/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
 
 package:
 	install -d `pwd`/../.pkgtmp/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/priv
-	cp -r `pwd`/../priv/* `pwd`/../.pkgtmp/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/priv
+	@cp -r `pwd`/../priv/* `pwd`/../.pkgtmp/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/priv
