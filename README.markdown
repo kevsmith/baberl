@@ -12,6 +12,10 @@ Using it is simple.
     {ok,<<"foo">>
     3> baberl:convert("UTF-8", "ASCII//translit//IGNORE", unicode:characters_to_binary("foo‘")).
     {ok,<<"foo^O">>}
+    4> baberl_plurals:pluralize(noun, "cat").
+    "cats"
+    5> baberl_plurals:pluralize(noun, "half").
+    "halves"
 
 Hurray!
 
