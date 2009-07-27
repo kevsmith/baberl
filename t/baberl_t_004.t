@@ -35,7 +35,7 @@ main(_) ->
            {"echo", "echoes"},
            {"video", "videos"}],
 
-  etap:plan(length(Words)),
+  etap:plan(length(Words) + 1),
   etap:is(application:start(baberl), ok, "Starting baberl"),
   lists:foreach(fun({Singular, Plural}) ->
                     etap:is(baberl_plurals:pluralize(noun, Singular), Plural, Singular ++ " -> " ++ Plural) end, Words),

@@ -51,9 +51,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal functions
 plurals_file_name(PartOfSpeech) ->
   BaseDir = filename:join([filename:dirname(code:which(?MODULE)), "..", "priv"]),
-  FN = filename:join([BaseDir, atom_to_list(PartOfSpeech) ++ "_plurals.bin"]),
-  io:format("~p~n", [FN]),
-  FN.
+  filename:join([BaseDir, atom_to_list(PartOfSpeech) ++ "_plurals.bin"]).
 
 binary_search(_Word, not_found) ->
   not_found;
