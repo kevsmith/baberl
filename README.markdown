@@ -1,6 +1,10 @@
 # About
 
-Baberl is an interface to the iconv library.
+Baberl is a collection of features to make working with character sets and language easier. Right now, Baberl
+provides two main features:
+
+* Character set conversions via iconv
+* Fairly robust pluralization support for pluralization of English nouns
 
 # Usage
 
