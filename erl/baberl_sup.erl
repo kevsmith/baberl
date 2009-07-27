@@ -18,6 +18,7 @@
 %% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 %% THE SOFTWARE.
 
+
 -module(baberl_sup).
 
 -behaviour(supervisor).
@@ -46,5 +47,8 @@ init([]) ->
 
   Loader = {baberl_loader, {baberl_loader, start_link, []},
             Restart, Shutdown, Type, [baberl_loader]},
+  Wordnet = {baberl_wordnet, {baberl_wordnet, start_link, []},
+            Restart, Shutdown, Type, [baberl_wordnet]},
 
-  {ok, {SupFlags, [Loader]}}.
+
+  {ok, {SupFlags, [Loader, Wordnet]}}.
