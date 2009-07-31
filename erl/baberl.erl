@@ -26,16 +26,16 @@
 -export([convert/2, convert/3, check_encodings/1, is_supported_encoding/1]).
 -export([encodings/0, closest_match/1]).
 
-%% @equiv convert(Pid, "", ToEncoding, Text).
+%% @equiv convert(Pid, "", ToEncoding, Text)
 convert(ToEncoding, Text) when is_list(ToEncoding), is_binary(Text) ->
   convert("", ToEncoding, Text).
 
-%% @spec convert(BaberlPort, FromEncoding, ToEncoding, Text) -> Result
-%%       BaberlPort = {atom(), pid()}
+%% @spec convert(FromEncoding, ToEncoding, Text) -> Result
 %%       FromEncoding = string()
 %%       ToEncoding = string()
 %%       Text = binary()
 %%       Result = term()
+%% @doc Converts text from one encoding to another
 convert(FromEncoding, ToEncoding, Text) when is_list(FromEncoding), is_list(ToEncoding), is_binary(Text) ->
   case unicode:characters_to_list(Text, utf8) of
     {incomplete, _, _} -> throw(bad_input);
@@ -61,6 +61,11 @@ convert(FromEncoding, ToEncoding, Text) when is_list(FromEncoding), is_list(ToEn
     port_close(Port)
   end.
 
+%% @spec check_encodings(Encodings) -> Result
+%%       Encodings = list(string())
+%%       Result = ok
+%% @throws tuple(unsupported_encoding, string())
+%% @doc Verifies all encodings are supported by the underlying iconv machinery
 check_encodings(Encodings) ->
   lists:foreach(fun(E) ->
                     case is_supported_encoding(E) =:= true orelse E =:= "" of
@@ -69,12 +74,23 @@ check_encodings(Encodings) ->
                     end
                 end, Encodings).
 
+%% @spec is_supported_encoding(Encoding) -> Result
+%%       Encoding = string()
+%%       Result = true | false
+%% @doc Determines if iconv supports a specific encoding
 is_supported_encoding(Encoding) ->
   lists:member(Encoding, ?SUPPORTED_ENCODINGS) or lists:member(Encoding ++ "//", ?SUPPORTED_ENCODINGS).
 
+%% @spec encodings() -> Result
+%%       Result = list(string())
+%% @doc Dumps the entire list of supported encodings
 encodings() ->
   ?SUPPORTED_ENCODINGS.
 
+%% @spec closest_match(Encoding) -> Result
+%%       Encoding = string()
+%%       Result = [] | string()
+%% @doc Finds the closest encoding based on _name_ not charset similarity
 closest_match(Encoding) ->
   case is_supported_encoding(Encoding) of
     true -> Encoding;

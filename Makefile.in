@@ -16,7 +16,8 @@ all:
 clean:
 	(cd c;$(MAKE) clean)
 	(cd erl;$(MAKE) clean)
-	@rm -f $(PACKAGE_NAME)-$(PACKAGE_VERSION).tgz
+	@rm -f $(PACKAGE_NAME)-$(PACKAGE_VERSION).tgz *.html edoc-info *.css *.png
+	@rm -rf doc
 
 distclean: clean
 	@rm -rf autom4te.cache config.log config.status
@@ -31,6 +32,14 @@ package: clean
 	@COPYFILE_DISABLE=true tar zcf $(PACKAGE_NAME)-$(PACKAGE_VERSION).tgz $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 	@rm -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)/
 
+docs:	all doc doc/*.html
+
+doc:
+	@mkdir -p doc
+
+doc/*.html:
+	erl -pz ebin -eval 'edoc:files(["./erl/baberl.erl","./erl/baberl_plurals.erl"])' -noshell -s init stop
+	@mv *.html erlang.png stylesheet.css edoc-info doc
 
 debug:
 	(cd c;$(MAKE) debug)
