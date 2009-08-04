@@ -53,6 +53,17 @@ handle_call({lookup_plural, noun, Word}, _From, #state{plurals=Plurals}=State) -
                            end,
   {reply, binary_search(Word, split(PluralList)), NewState};
 
+handle_call({lookup_plural, verb, Word}, _From, #state{plurals=Plurals}=State) ->
+  {NewState, PluralList} = case dict:find(verb_plurals, Plurals) of
+                             {ok, P} ->
+                               {State, P};
+                             _ ->
+                               {ok, Bin} = file:read_file(plurals_file_name(verb)),
+                               P = binary_to_term(Bin),
+                               {State#state{plurals=dict:store(verb_plurals, P, Plurals)}, P}
+                           end,
+  {reply, binary_search(Word, split(PluralList)), NewState};
+
 handle_call(_Request, _From, State) ->
   {reply, ignored, State}.
 

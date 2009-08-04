@@ -38,7 +38,7 @@ doc:
 	@mkdir -p doc
 
 doc/*.html:
-	erl -pz ebin -eval 'edoc:files(["./erl/baberl.erl","./erl/baberl_plurals.erl"])' -noshell -s init stop
+	erl -pz ebin -eval 'edoc:files(["./erl/baberl.erl","./erl/baberl_plurals.erl","./erl/baberl_numbers.erl"])' -noshell -s init stop
 	@mv *.html erlang.png stylesheet.css edoc-info doc
 
 debug:
