@@ -1,7 +1,6 @@
 # About
 
-Baberl is a collection of features to make working with character sets and language easier. Right now, Baberl
-provides two main features:
+Baberl is a collection of features to make working with character sets and language easier:
 
 * Character set conversions via iconv
 * Robust pluralization support for English nouns
