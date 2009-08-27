@@ -60,6 +60,6 @@ load_driver() ->
   case erl_ddll:load(Dir, baberl_drv) of
     ok ->
       ok;
-    Error ->
+    {error, Error} ->
       erl_ddll:format_error(Error)
   end.
